@@ -1,0 +1,10 @@
+[
+  { "name": "Pat", "exclusions": ["Sam", "Taylor"] },
+  { "name": "Lee", "exclusions": ["Pat", "Jordan"] },
+  { "name": "Sam", "exclusions": ["Pat", "Morgan"] },
+  { "name": "Riley", "exclusions": ["Taylor"] },
+  { "name": "Jordan", "exclusions": ["Casey", "Lee"] },
+  { "name": "Morgan", "exclusions": ["Casey"] },
+  { "name": "Taylor", "exclusions": ["Riley"] },
+  { "name": "Casey", "exclusions": ["Jordan", "Morgan"] }
+]

@@ -1,5 +1,35 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# PDM & venv
+__pypackages__/
+.venv/
+venv/
+
+# Pytest cache
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+
+# Editor directories
+.vscode/
+.idea/
+
+# Pairing PDF outputs
+pairings_pdfs/
+
+# Participants JSON file (local override)
+resources/participants.json
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[codz]
 *$py.class
 
