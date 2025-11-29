@@ -3,6 +3,7 @@ import random
 from typing import Any, Dict, List
 import os
 from pathlib import Path
+from datetime import date
 
 try:
     import importlib.util
@@ -222,7 +223,8 @@ def write_pairing_pdfs(
     for giver, receiver in mapping.items():
         # make filename safe
         safe_name = str(giver).replace("/", "_").replace("\\", "_")
-        filename = os.path.join(outdir, f"To be opened by {safe_name} - 2025.pdf")
+        year = date.today().year
+        filename = os.path.join(outdir, f"To be opened by {safe_name} - {year}.pdf")
         c = canvas.Canvas(filename, pagesize=letter)
         width, height = letter
         title = f"Hello {giver}!"

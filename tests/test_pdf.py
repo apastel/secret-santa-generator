@@ -1,4 +1,5 @@
 import pytest
+from datetime import date
 from secret_santa import create_mapping, write_pairing_pdfs
 
 
@@ -18,5 +19,6 @@ def test_write_pairing_pdfs(tmp_path):
     # expect one PDF per giver
     for giver in mapping.keys():
         safe_name = str(giver).replace("/", "_").replace("\\", "_")
-        filename = outdir / f"To be opened by {safe_name} - 2025.pdf"
+        year = date.today().year
+        filename = outdir / f"To be opened by {safe_name} - {year}.pdf"
         assert filename.exists()
