@@ -46,6 +46,3 @@ def test_load_participants_from_example():
     assert isinstance(parts, list)
     # the example should have at least one participant entry and each should be a dict
     assert any(isinstance(p, dict) and "name" in p for p in parts)
-
-
- 

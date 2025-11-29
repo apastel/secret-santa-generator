@@ -1,6 +1,5 @@
 import json
 from click.testing import CliRunner
-import pytest
 from secret_santa.__main__ import main as cli_main
 
 
