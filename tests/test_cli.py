@@ -32,3 +32,20 @@ def test_cli_participants_and_outdir(tmp_path):
         safe_name = str(giver).replace("/", "_").replace("\\", "_")
         filename = Path(outdir) / f"To be opened by {safe_name} (Secret Santa {year}).pdf"
         assert filename.exists()
+
+
+def test_cli_outdir_with_show_shows_mapping(tmp_path):
+    participants = [
+        {"name": "Pat", "exclusions": []},
+        {"name": "Lee", "exclusions": []},
+        {"name": "Sam", "exclusions": []},
+    ]
+    participants_file = tmp_path / "parts.json"
+    participants_file.write_text(json.dumps(participants), encoding="utf-8")
+
+    outdir = tmp_path / "out"
+    runner = CliRunner()
+    result = runner.invoke(cli_main, ["--participants", str(participants_file), "--outdir", str(outdir), "--show"])
+    assert result.exit_code == 0
+    # With --show, the mapping should be printed to stdout even when PDFs are generated.
+    assert "Secret Santa Pairings:" in result.output

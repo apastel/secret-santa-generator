@@ -18,14 +18,20 @@ from . import main as run_main
     required=False,
     help="Directory to write pairing PDFs (if omitted, PDFs are not written)",
 )
-def main(participants_path: str | None = None, outdir: str | None = None):
+@click.option(
+    "--show/--no-show",
+    "show",
+    default=False,
+    help="Show the mapping in the console even when `--outdir` is provided",
+)
+def main(participants_path: str | None = None, outdir: str | None = None, show: bool = False):
     """Secret Santa CLI.
 
     Example:
         python -m secret_santa --participants resources/participants.json --outdir pairings_pdfs
     """
     try:
-        run_main(participants_path, outdir=outdir)
+        run_main(participants_path, outdir=outdir, show=show)
     except FileNotFoundError as exc:
         click.echo(str(exc), err=True)
         raise SystemExit(2)

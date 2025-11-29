@@ -220,7 +220,7 @@ def write_pairing_pdfs(
     from reportlab.pdfgen import canvas
 
     os.makedirs(outdir, exist_ok=True)
-    print("Generating PDFs...")
+    print("\nGenerating PDFs...")
     generated_files: dict[str, str] = {}
     for giver, receiver in mapping.items():
         # make filename safe
@@ -322,7 +322,7 @@ def write_pairing_pdfs(
     return generated_files
 
 
-def main(participants_path: str | None = None, outdir: str | None = None):
+def main(participants_path: str | None = None, outdir: str | None = None, show: bool = False):
     """Run the mapping generation and optionally write PDFs.
 
     - participants_path: path to participants JSON (overrides env & local files)
@@ -331,22 +331,26 @@ def main(participants_path: str | None = None, outdir: str | None = None):
     """
     participants = load_participants(participants_path)
     mapping = create_mapping(participants)
-    # If outdir is provided and generation of PDFs succeeded, suppress console mapping printing.
+    # If outdir is provided and generation of PDFs succeeded, suppress console mapping printing
+    # unless show==True.
     should_print_mapping = True
     if outdir:
         try:
             generated_files = write_pairing_pdfs(mapping, outdir=outdir)
             if generated_files:
-                should_print_mapping = False
+                if not show:
+                    should_print_mapping = False
         except ImportError:
             # Could not generate PDFs, so still print mapping
             should_print_mapping = True
 
     if should_print_mapping:
-        print("Secret Santa Pairings:\n")
+        print("\nSecret Santa Pairings:\n")
         for k, v in mapping.items():
             print(f"{k} is {v}'s secret Santa")
-        print("\nRun with --outdir to generate PDFs instead of printing to the console.")
+        if not show:
+            print("\nRun with --outdir to generate PDFs instead of printing to the console.")
+    print()
     # outdir processing already handled above; nothing further to do
     return mapping
 
