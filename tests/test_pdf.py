@@ -22,3 +22,7 @@ def test_write_pairing_pdfs(tmp_path):
         year = date.today().year
         filename = outdir / f"To be opened by {safe_name} - {year}.pdf"
         assert filename.exists()
+        # Ensure generated PDF contains the repository URL as a clickable link annotation
+        with open(filename, "rb") as fh:
+            pdf_bytes = fh.read()
+        assert b"https://github.com/apastel/secret-santa-generator" in pdf_bytes
