@@ -25,7 +25,7 @@ venv/
 
 # Pairing PDF outputs
 pairings_pdfs/
-.pdf
+*.pdf
 
 # Participants JSON file (local override)
 resources/participants.json

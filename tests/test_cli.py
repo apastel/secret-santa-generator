@@ -20,4 +20,4 @@ def test_cli_participants_and_outdir(tmp_path):
     # ensure PDFs are created (click CLI used `outdir` so write_pairing_pdfs attempted)
     # If reportlab is not installed, this test will be skipped by importorskip in the PDF test
     # but we still want to ensure the CLI executed successfully.
-    assert "Name mapping:" in result.output
+    assert "Secret Santa Pairings:" in result.output
