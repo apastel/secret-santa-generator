@@ -1,5 +1,7 @@
 # secret-santa-generator
-Find out who gets who for your Secret Santa group!
+Figure out who gets who for your Secret Santa group!
+
+Just provide a list of names and exclusions (people they shouldn't be matched with) and the tool will generate a PDF to be given to each participant which contains the name of who they are the Secret Santa of.
 
 ## Setup (pip/venv)
 
@@ -12,19 +14,17 @@ source .venv/bin/activate
 
 # Upgrade pip and install the package in editable mode with development extras
 python -m pip install -U pip
+python -m pip install '.[pdf]'
 python -m pip install -e '.[dev,pdf]'
 
 # Run tests
 pytest
 
-# Run the CLI
+# Run the CLI to see the pairings in the console
 secret-santa
-```
 
-Optional feature: export PDF pairings with `reportlab` (install the pdf extras above, or install directly):
-```bash
-python -m pip install reportlab
-```
+# Specify an outdir to generate PDFs and hide console output
+secret-santa --outdir .
 ```
 
 ## Customize participants
@@ -57,9 +57,3 @@ the participant list are ignored.
 Note: Running the CLI without any participants configured will raise a
 FileNotFoundError. Provide a participants file explicitly or set the
 `SECRET_SANTA_PARTICIPANTS` env var to a path for the CLI to work.
-
-
-```bash
-python -m pip install reportlab
-```
-
