@@ -1,26 +1,30 @@
 # secret-santa-generator
 Find out who gets who for your Secret Santa group!
 
-## Setup (PDM)
+## Setup (pip/venv)
 
-This project uses PDM for dependency management. To set it up locally:
+This project uses a standard Python packaging workflow and can be set up with a virtual environment and pip.
 
 ```bash
-# Install PDM if you don't have it
-python -m pip install -U pdm
+# Create a virtual environment and activate it
+python -m venv .venv
+source .venv/bin/activate
 
-# Install project dependencies
-pdm install
+# Upgrade pip and install the package in editable mode with development extras
+python -m pip install -U pip
+python -m pip install -e '.[dev,pdf]'
 
 # Run tests
-pdm run pytest
+pytest
 
 # Run the CLI
-pdm run secret-santa
+secret-santa
 ```
 
-Optional feature: export PDF pairings with `reportlab`:
-pdm add --dev reportlab
+Optional feature: export PDF pairings with `reportlab` (install the pdf extras above, or install directly):
+```bash
+python -m pip install reportlab
+```
 ```
 
 ## Customize participants
@@ -56,6 +60,6 @@ FileNotFoundError. Provide a participants file explicitly or set the
 
 
 ```bash
-pdm add --dev reportlab
+python -m pip install reportlab
 ```
 

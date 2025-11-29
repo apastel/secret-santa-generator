@@ -1,6 +1,6 @@
 [build-system]
-requires = ["pdm-backend>=0.10.0"]
-build-backend = "pdm.backend"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "secret-santa-generator"
@@ -10,20 +10,15 @@ readme = "README.md"
 license = { text = "MIT" }
 authors = [ { name = "apastel" } ]
 requires-python = ">=3.8"
-
 dependencies = [
 	"click>=8.1.3",
 ]
-
-[project.optional-dependencies]
-pdf = ["reportlab>=3.6.0"]
-
 [project.scripts]
 secret-santa = "secret_santa.__main__:main"
 
-[tool.pdm.dev-dependencies]
-pytest = "*"
+[project.optional-dependencies]
+pdf = ["reportlab>=3.6.0"]
+dev = ["pytest"]
 
-[tool.pdm]
-package-dir = { "" = "src" }
-packages = [{ include = "secret_santa" }]
+[tool.setuptools.packages.find]
+where = ["src"]
