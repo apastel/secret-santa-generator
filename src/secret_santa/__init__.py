@@ -13,11 +13,6 @@ except Exception:
     _HAS_REPORTLAB = False
     # leave `canvas` and `letter` undefined; the writer function will import them
 
-# Note: default participants are intentionally not embedded in code; callers
-# should supply a participants JSON file or set the environment variable
-# `SECRET_SANTA_PARTICIPANTS` to a path. This keeps the repository free of
-# private or local data and forces a clear source of truth for participants.
-
 
 def _default_project_resource_path(name: str) -> str:
     """Return a path under the repo's `resources/` directory for `name`.
@@ -35,7 +30,6 @@ def load_participants(path: str | None = None) -> List[Any]:
 
     If `path` is not provided, the function will check the following in order
     and use the first that exists:
-    - Environment variable `SECRET_SANTA_PARTICIPANTS` (filepath)
     - `resources/participants.json` (project-local override, ignored by git)
     - `resources/participants.json.example` (committed example)
     - If none is found, raise FileNotFoundError
@@ -47,11 +41,6 @@ def load_participants(path: str | None = None) -> List[Any]:
             with candidate.open(encoding="utf-8") as fh:
                 return json.load(fh)
         raise FileNotFoundError(f"Participants file not found: {path}")
-
-    env_path = os.environ.get("SECRET_SANTA_PARTICIPANTS")
-    if env_path and Path(env_path).exists():
-        with open(env_path, encoding="utf-8") as fh:
-            return json.load(fh)
 
     local = Path(_default_project_resource_path("participants.json"))
     if local.exists():
@@ -65,8 +54,8 @@ def load_participants(path: str | None = None) -> List[Any]:
 
     # If we got here, there is no participants file configured.
     raise FileNotFoundError(
-        "No participants configuration found. Provide a file via `path`, "
-        "set the env var `SECRET_SANTA_PARTICIPANTS`, or add `resources/participants.json`"
+        "No participants configuration found. Provide a file via `--participants`, "
+        "or add `resources/participants.json`"
     )
 
 
