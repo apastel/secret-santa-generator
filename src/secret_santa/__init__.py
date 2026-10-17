@@ -2,6 +2,8 @@ import json
 import random
 import secrets
 import base64
+import html
+import shutil
 from typing import Any, Dict, List
 import os
 from pathlib import Path
@@ -335,6 +337,11 @@ def write_pairing_html(
         raise ValueError("base_url must be an absolute HTTP or HTTPS URL")
 
     os.makedirs(outdir, exist_ok=True)
+    image_source = Path(_default_project_resource_path("secret-santa.png"))
+    if not image_source.is_file():
+        raise FileNotFoundError(f"Secret Santa image not found: {image_source}")
+    shutil.copyfile(image_source, Path(outdir) / image_source.name)
+
     base_url = base_url.rstrip("/")
     generated_links: dict[str, str] = {}
 
@@ -361,14 +368,27 @@ def write_pairing_html(
             "  <title>Secret Santa</title>\n"
             "  <style>"
             "body{font-family:system-ui,sans-serif;margin:0;min-height:100vh;"
-            "display:grid;place-items:center;background:#f3f6f4;color:#20302a}"
-            "main{max-width:34rem;padding:3rem 2rem;text-align:center}"
-            "h1{font-size:2rem}p{font-size:1.25rem}"
+            "display:grid;place-items:center;background:#fff8ed;color:#20302a}"
+            "main{box-sizing:border-box;width:min(100%,42rem);padding:2.5rem 1.5rem;"
+            "text-align:center}"
+            "h1{font-size:2rem;margin:0 0 1.5rem}"
+            ".reveal-panel{position:relative;display:grid;place-items:center;"
+            "min-height:4.5rem;margin:0 auto 1.5rem}"
+            "#assignment{margin:0;font-size:1.25rem;filter:blur(8px);user-select:none}"
+            "#reveal-button{position:absolute;inset:0;border:1px solid #536b5d;"
+            "border-radius:6px;background:#fffdf8;color:#20302a;font:inherit;"
+            "font-weight:600;cursor:pointer}"
+            "#reveal-button:focus-visible{outline:3px solid #d58c22;outline-offset:3px}"
+            "#santa-image{display:block;width:100%;height:auto;margin:0 auto}"
             "</style>\n"
             "</head>\n"
             "<body><main>\n"
-            "  <h1>Your Secret Santa assignment</h1>\n"
-            '  <p id="assignment">Unlocking your assignment...</p>\n'
+            f"  <h1>Hello {html.escape(str(giver))}!</h1>\n"
+            '  <div class="reveal-panel">\n'
+            '    <p id="assignment">Your assignment is hidden.</p>\n'
+            '    <button id="reveal-button" type="button">Tap to reveal</button>\n'
+            "  </div>\n"
+            f'  <img id="santa-image" src="{image_source.name}" alt="Secret Santa illustration">\n'
             "</main>\n"
             "<script>\n"
             f'const nonce = "{nonce_encoded}";\n'
@@ -384,12 +404,20 @@ def write_pairing_html(
             "    const cleartext = await crypto.subtle.decrypt(\n"
             '      {name: "AES-GCM", iv: decode(nonce)}, key, decode(ciphertext));\n'
             '    const recipient = new TextDecoder().decode(cleartext);\n'
-            '    document.getElementById("assignment").textContent = "You are " + recipient + "\'s Secret Santa.";\n'
+            '    document.getElementById("assignment").textContent = "You are buying a present for: " + recipient + "!";\n'
+            '    document.getElementById("assignment").style.filter = "none";\n'
             "  } catch {\n"
             '    document.getElementById("assignment").textContent = "This link is invalid or incomplete.";\n'
+            '    document.getElementById("assignment").style.filter = "none";\n'
             "  }\n"
             "}\n"
-            "showAssignment();\n"
+            'document.getElementById("reveal-button").addEventListener("click", async (event) => {\n'
+            '  const button = event.currentTarget;\n'
+            '  button.disabled = true;\n'
+            '  button.textContent = "Revealing...";\n'
+            "  await showAssignment();\n"
+            '  button.remove();\n'
+            "});\n"
             "</script></body>\n"
             "</html>\n",
             encoding="utf-8",
