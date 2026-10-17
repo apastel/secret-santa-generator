@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Secret Santa</title>
+  <style>body{font-family:system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#fff8ed;color:#20302a}main{box-sizing:border-box;width:min(100%,42rem);padding:2.5rem 1.5rem;text-align:center}h1{font-size:2rem;margin:0 0 1.5rem}.reveal-panel{position:relative;display:grid;place-items:center;min-height:4.5rem;margin:0 auto 1.5rem}#assignment{margin:0;font-size:1.25rem;filter:blur(8px);user-select:none}#reveal-button{position:absolute;inset:0;border:1px solid #536b5d;border-radius:6px;background:#fffdf8;color:#20302a;font:inherit;font-weight:600;cursor:pointer}#reveal-button:focus-visible{outline:3px solid #d58c22;outline-offset:3px}#santa-image{display:block;width:100%;height:auto;margin:0 auto}</style>
+</head>
+<body><main>
+  <h1>Hello Karl!</h1>
+  <div class="reveal-panel">
+    <p id="assignment">Your assignment is hidden.</p>
+    <button id="reveal-button" type="button">Tap to reveal</button>
+  </div>
+  <img id="santa-image" src="secret-santa.png" alt="Secret Santa illustration">
+</main>
+<script>
+const nonce = "Q_HK_8VauOG-qB6g";
+const ciphertext = "ucBIlrmQubYqizclpCzZ__25Iw-c";
+function decode(value) {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(base64 + "=".repeat((4 - base64.length % 4) % 4)), c => c.charCodeAt(0));
+}
+async function showAssignment() {
+  try {
+    const keyBytes = decode(window.location.hash.slice(1));
+    const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+    const cleartext = await crypto.subtle.decrypt(
+      {name: "AES-GCM", iv: decode(nonce)}, key, decode(ciphertext));
+    const recipient = new TextDecoder().decode(cleartext);
+    document.getElementById("assignment").textContent = "You are buying a present for: " + recipient + "!";
+    document.getElementById("assignment").style.filter = "none";
+  } catch {
+    document.getElementById("assignment").textContent = "This link is invalid or incomplete.";
+    document.getElementById("assignment").style.filter = "none";
+  }
+}
+document.getElementById("reveal-button").addEventListener("click", async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.textContent = "Revealing...";
+  await showAssignment();
+  button.remove();
+});
+</script></body>
+</html>
