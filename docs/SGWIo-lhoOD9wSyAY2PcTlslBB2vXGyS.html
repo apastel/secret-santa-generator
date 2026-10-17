@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Secret Santa</title>
+  <style>body{font-family:system-ui,sans-serif;margin:0;min-height:100vh;display:grid;place-items:center;background:#f3f6f4;color:#20302a}main{max-width:34rem;padding:3rem 2rem;text-align:center}h1{font-size:2rem}p{font-size:1.25rem}</style>
+</head>
+<body><main>
+  <h1>Your Secret Santa assignment</h1>
+  <p id="assignment">Unlocking your assignment...</p>
+</main>
+<script>
+const nonce = "7KWaTq4pU4iF66yn";
+const ciphertext = "hzjq_KDjmH1G5jcCuqPfEYsU78vBHX4";
+function decode(value) {
+  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+  return Uint8Array.from(atob(base64 + "=".repeat((4 - base64.length % 4) % 4)), c => c.charCodeAt(0));
+}
+async function showAssignment() {
+  try {
+    const keyBytes = decode(window.location.hash.slice(1));
+    const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+    const cleartext = await crypto.subtle.decrypt(
+      {name: "AES-GCM", iv: decode(nonce)}, key, decode(ciphertext));
+    const recipient = new TextDecoder().decode(cleartext);
+    document.getElementById("assignment").textContent = "You are " + recipient + "'s Secret Santa.";
+  } catch {
+    document.getElementById("assignment").textContent = "This link is invalid or incomplete.";
+  }
+}
+showAssignment();
+</script></body>
+</html>

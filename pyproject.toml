@@ -12,6 +12,7 @@ authors = [ { name = "apastel" } ]
 requires-python = ">=3.8"
 dependencies = [
 	"click>=8.1.3",
+	"cryptography>=41.0",
 ]
 [project.scripts]
 secret-santa = "secret_santa.__main__:main"

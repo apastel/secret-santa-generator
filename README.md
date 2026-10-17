@@ -29,6 +29,9 @@ secret-santa --outdir .
 
 # Or, generate PDFs *and* see the console output
 secret-santa --outdir . --show
+
+# Generate private-link HTML pages in docs/ for GitHub Pages
+secret-santa --html-outdir docs --base-url https://YOUR-USERNAME.github.io/YOUR-REPOSITORY
 ```
 
 ## Customize participants
@@ -62,6 +65,32 @@ You can also specify the path to your participants file:
 ```bash
 secret-santa --participants /path/to/myfile.json
 ```
+
+## Publish Personal Links
+
+Generate one randomly named HTML page per participant and print the matching
+links locally:
+
+```bash
+secret-santa \
+		--participants resources/participants.json \
+		--html-outdir docs \
+		--base-url https://YOUR-USERNAME.github.io/YOUR-REPOSITORY
+```
+
+The repository includes a GitHub Actions workflow that publishes `docs/` to
+GitHub Pages when changes are pushed to `main`. Enable Pages for the repository
+and select **GitHub Actions** as the build and deployment source in its Pages
+settings. Commit the generated HTML files and push; after the workflow succeeds,
+text each person the URL printed next to their name.
+
+Each page uses a random filename, and its assignment is encrypted with
+AES-GCM. The decryption key is in the URL fragment, which is not sent to the
+GitHub Pages server or included in the published files. There is no public
+assignment index. These are still bearer links, not access-controlled pages:
+anyone who receives a complete link can view that assignment. Avoid posting the
+printed name-to-link list publicly, and regenerate pages if a link is shared
+with the wrong person.
 
 Thus, here's the hierarchical order in which participants are checked for and loaded:
 * Path specified by `--participants`

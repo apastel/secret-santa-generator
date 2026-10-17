@@ -1,9 +1,13 @@
 import json
 import random
+import secrets
+import base64
 from typing import Any, Dict, List
 import os
 from pathlib import Path
 from datetime import date
+from urllib.parse import urlsplit
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 try:
     import importlib.util
@@ -87,6 +91,8 @@ def _normalize_participants(participants: List[Any]) -> tuple[list[str], dict[st
             exclusions[item] = set()
         else:
             raise ValueError("Invalid participant entry; expected dict or string")
+    if not names:
+        raise ValueError("At least one participant is required")
     # Filter exclusions to known names
     for k in exclusions:
         exclusions[k] = {e for e in exclusions[k] if e in names}
@@ -224,7 +230,7 @@ def write_pairing_pdfs(
 
         # Prepare text variables; we draw image first so the text appears on top
         c.setFont("Helvetica", 14)
-        text = f"You have been assigned: {receiver}"
+        text = f"You are {receiver}'s Secret Santa!"
         text_y = height - 140
 
         # optional image under the assignment text
@@ -311,42 +317,131 @@ def write_pairing_pdfs(
     return generated_files
 
 
-def main(participants_path: str | None = None, outdir: str | None = None, show: bool = False):
-    """Run the mapping generation and optionally write PDFs.
+def write_pairing_html(
+    mapping: Dict[Any, Any], outdir: str, base_url: str
+) -> dict[str, str]:
+    """Write one unlisted, randomly named HTML page per participant.
 
-    - participants_path: path to participants JSON (overrides env & local files)
-    - outdir: path to write pairing PDFs; if None, PDFs are NOT written
-    Returns the `mapping` that was generated.
+    Returns links keyed by participant name. No index page is written, so the
+    assignment list stays local to the person running the generator.
     """
+    parsed_url = urlsplit(base_url)
+    if (
+        parsed_url.scheme not in {"http", "https"}
+        or not parsed_url.netloc
+        or parsed_url.query
+        or parsed_url.fragment
+    ):
+        raise ValueError("base_url must be an absolute HTTP or HTTPS URL")
+
+    os.makedirs(outdir, exist_ok=True)
+    base_url = base_url.rstrip("/")
+    generated_links: dict[str, str] = {}
+
+    def encode_urlsafe(value: bytes) -> str:
+        return base64.urlsafe_b64encode(value).decode("ascii").rstrip("=")
+
+    for giver, receiver in mapping.items():
+        token = secrets.token_urlsafe(24)
+        filename = f"{token}.html"
+        page_path = Path(outdir) / filename
+        key = AESGCM.generate_key(bit_length=256)
+        nonce = secrets.token_bytes(12)
+        ciphertext = AESGCM(key).encrypt(nonce, str(receiver).encode("utf-8"), None)
+        nonce_encoded = encode_urlsafe(nonce)
+        ciphertext_encoded = encode_urlsafe(ciphertext)
+        key_encoded = encode_urlsafe(key)
+        page_path.write_text(
+            "<!doctype html>\n"
+            '<html lang="en">\n'
+            "<head>\n"
+            '  <meta charset="utf-8">\n'
+            '  <meta name="viewport" content="width=device-width, initial-scale=1">\n'
+            '  <meta name="robots" content="noindex, nofollow">\n'
+            "  <title>Secret Santa</title>\n"
+            "  <style>"
+            "body{font-family:system-ui,sans-serif;margin:0;min-height:100vh;"
+            "display:grid;place-items:center;background:#f3f6f4;color:#20302a}"
+            "main{max-width:34rem;padding:3rem 2rem;text-align:center}"
+            "h1{font-size:2rem}p{font-size:1.25rem}"
+            "</style>\n"
+            "</head>\n"
+            "<body><main>\n"
+            "  <h1>Your Secret Santa assignment</h1>\n"
+            '  <p id="assignment">Unlocking your assignment...</p>\n'
+            "</main>\n"
+            "<script>\n"
+            f'const nonce = "{nonce_encoded}";\n'
+            f'const ciphertext = "{ciphertext_encoded}";\n'
+            "function decode(value) {\n"
+            '  const base64 = value.replace(/-/g, "+").replace(/_/g, "/");\n'
+            '  return Uint8Array.from(atob(base64 + "=".repeat((4 - base64.length % 4) % 4)), c => c.charCodeAt(0));\n'
+            "}\n"
+            "async function showAssignment() {\n"
+            "  try {\n"
+            '    const keyBytes = decode(window.location.hash.slice(1));\n'
+            '    const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);\n'
+            "    const cleartext = await crypto.subtle.decrypt(\n"
+            '      {name: "AES-GCM", iv: decode(nonce)}, key, decode(ciphertext));\n'
+            '    const recipient = new TextDecoder().decode(cleartext);\n'
+            '    document.getElementById("assignment").textContent = "You are " + recipient + "\'s Secret Santa.";\n'
+            "  } catch {\n"
+            '    document.getElementById("assignment").textContent = "This link is invalid or incomplete.";\n'
+            "  }\n"
+            "}\n"
+            "showAssignment();\n"
+            "</script></body>\n"
+            "</html>\n",
+            encoding="utf-8",
+        )
+        generated_links[str(giver)] = f"{base_url}/{filename}#{key_encoded}"
+    return generated_links
+
+
+def main(
+    participants_path: str | None = None,
+    outdir: str | None = None,
+    show: bool = False,
+    html_outdir: str | None = None,
+    base_url: str | None = None,
+):
+    """Run the mapping generation and optionally write PDFs or HTML pages."""
     participants = load_participants(participants_path)
     mapping = create_mapping(participants)
-    # If outdir is provided and generation of PDFs succeeded, suppress console mapping printing
-    # unless show==True.
-    should_print_mapping = True
+    generated_links: dict[str, str] | None = None
+    if html_outdir:
+        if not base_url:
+            raise ValueError("base_url is required when html_outdir is provided")
+        generated_links = write_pairing_html(mapping, html_outdir, base_url)
+
+    pdfs_generated = False
     if outdir:
         try:
             generated_files = write_pairing_pdfs(mapping, outdir=outdir)
-            if generated_files:
-                if not show:
-                    should_print_mapping = False
+            pdfs_generated = bool(generated_files)
         except ImportError:
-            # Could not generate PDFs, so still print mapping
-            should_print_mapping = True
+            print("ReportLab not installed, skipping PDF generation")
 
-    if should_print_mapping:
+    if generated_links is not None:
+        print("\nSecret Santa links:\n")
+        for giver, link in generated_links.items():
+            print(f"{giver}: {link}")
+    elif not pdfs_generated or show:
         print("\nSecret Santa Pairings:\n")
         for k, v in mapping.items():
             print(f"{k} is {v}'s secret Santa")
-        if not show:
-            print("\nRun with --outdir to generate PDFs instead of printing to the console.")
+    if show and generated_links:
+        print("\nSecret Santa Pairings:\n")
+        for k, v in mapping.items():
+            print(f"{k} is {v}'s secret Santa")
     print()
-    # outdir processing already handled above; nothing further to do
     return mapping
 
 
 __all__ = [
     "create_mapping",
     "write_pairing_pdfs",
+    "write_pairing_html",
     "load_participants",
     "main",
 ]
