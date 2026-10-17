@@ -372,22 +372,24 @@ def write_pairing_html(
             "main{box-sizing:border-box;width:min(100%,42rem);padding:2.5rem 1.5rem;"
             "text-align:center}"
             "h1{font-size:2rem;margin:0 0 1.5rem}"
-            ".reveal-panel{position:relative;display:grid;place-items:center;"
-            "min-height:4.5rem;margin:0 auto 1.5rem}"
-            "#assignment{margin:0;font-size:1.25rem;filter:blur(8px);user-select:none}"
-            "#reveal-button{position:absolute;inset:0;border:1px solid #536b5d;"
+            ".assignment-line{margin:0 0 1.5rem;font-size:1.25rem;line-height:1.7}"
+            ".reveal-target{position:relative;display:inline-grid;vertical-align:middle}"
+            "#recipient,#reveal-button{grid-area:1/1}"
+            "#recipient{filter:blur(8px);user-select:none;white-space:nowrap}"
+            "#reveal-button{z-index:1;align-self:stretch;justify-self:stretch;"
+            "padding:.45rem .8rem;border:1px solid #536b5d;"
             "border-radius:6px;background:#fffdf8;color:#20302a;font:inherit;"
-            "font-weight:600;cursor:pointer}"
+            "font-weight:600;cursor:pointer;white-space:nowrap}"
             "#reveal-button:focus-visible{outline:3px solid #d58c22;outline-offset:3px}"
             "#santa-image{display:block;width:100%;height:auto;margin:0 auto}"
             "</style>\n"
             "</head>\n"
             "<body><main>\n"
             f"  <h1>Hello {html.escape(str(giver))}!</h1>\n"
-            '  <div class="reveal-panel">\n'
-            '    <p id="assignment">Your assignment is hidden.</p>\n'
-            '    <button id="reveal-button" type="button">Tap to reveal</button>\n'
-            "  </div>\n"
+            '  <p class="assignment-line">You will be getting a present for '
+            '    <span class="reveal-target"><span id="recipient">hidden</span>'
+            '<button id="reveal-button" type="button">Tap to reveal</button></span>!'
+            "</p>\n"
             f'  <img id="santa-image" src="{image_source.name}" alt="Secret Santa illustration">\n'
             "</main>\n"
             "<script>\n"
@@ -404,11 +406,11 @@ def write_pairing_html(
             "    const cleartext = await crypto.subtle.decrypt(\n"
             '      {name: "AES-GCM", iv: decode(nonce)}, key, decode(ciphertext));\n'
             '    const recipient = new TextDecoder().decode(cleartext);\n'
-            '    document.getElementById("assignment").textContent = "You are buying a present for: " + recipient + "!";\n'
-            '    document.getElementById("assignment").style.filter = "none";\n'
+            '    document.getElementById("recipient").textContent = recipient;\n'
+            '    document.getElementById("recipient").style.filter = "none";\n'
             "  } catch {\n"
-            '    document.getElementById("assignment").textContent = "This link is invalid or incomplete.";\n'
-            '    document.getElementById("assignment").style.filter = "none";\n'
+            '    document.getElementById("recipient").textContent = "Invalid link";\n'
+            '    document.getElementById("recipient").style.filter = "none";\n'
             "  }\n"
             "}\n"
             'document.getElementById("reveal-button").addEventListener("click", async (event) => {\n'

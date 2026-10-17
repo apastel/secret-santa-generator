@@ -30,9 +30,11 @@ def test_write_pairing_html_creates_unlisted_pages_and_links(tmp_path):
         assert "noindex, nofollow" in page
         assert mapping[giver] not in page
         assert f"Hello {html.escape(giver)}!" in page
+        assert "You will be getting a present for " in page
+        assert '<span class="reveal-target"><span id="recipient">hidden</span>' in page
         assert 'id="reveal-button" type="button">Tap to reveal</button>' in page
         assert 'src="secret-santa.png" alt="Secret Santa illustration"' in page
-        assert '''"You are " + recipient + "'s Secret Santa!"''' in page
+        assert 'document.getElementById("recipient").textContent = recipient;' in page
         nonce_match = re.search(r'const nonce = "([^"]+)";', page)
         ciphertext_match = re.search(r'const ciphertext = "([^"]+)";', page)
         assert nonce_match is not None
